@@ -13,7 +13,11 @@
     "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/pwa": "^3.3.5",
     "core-js": "^3.15.1",
-    "nuxt": "^2.15.7"
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "nuxt": "^2.15.7",
+    "passport": "^0.4.1",
+    "passport-github2": "^0.1.12"
   },
   "devDependencies": {
     "@nuxt/types": "^2.15.7",
