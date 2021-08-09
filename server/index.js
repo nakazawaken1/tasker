@@ -4,12 +4,8 @@ import passport from 'passport'
 import { Strategy } from 'passport-github2'
 
 const app = express()
-
-// requestでjsonを扱えるように設定
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
-
-// sessionの設定
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
   resave: true,
@@ -18,48 +14,40 @@ app.use(session({
     secure: 'auto'
   }
 }))
-
-// Passport.jsの設定
 app.use(passport.initialize())
 app.use(passport.session())
-
 passport.use(new Strategy(
   {
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: 'http://localhost:3000/callback'
+    callbackURL: process.env.CALLBACK_URL || 'http://localhost:3000/callback'
   },
   (accessToken, refreshToken, profile, done) => {
-    process.nextTick(() => {
-      return done(null, profile)
-    })
+    process.nextTick(() => done(null, {
+      id: profile.id,
+      name: profile.username,
+      photo: profile.photos[0].value
+    }))
   }
 ))
+passport.serializeUser((user, done) => done(null, user))
+passport.deserializeUser((data, done) => done(null, data))
 
-passport.serializeUser((user, done) => {
-  done(null, {
-    id: user.id,
-    name: user.username,
-    avatarUrl: user.photos[0].value
-  })
-})
-passport.deserializeUser((obj, done) => {
-  done(null, obj)
-})
-
-app.get('/auth/login', passport.authenticate('github', { scope: ['user:email'] }))
+app.get('/auth/login',
+  (req, res, next) => (req.session.url = req.query.url, next()),
+  passport.authenticate('github', { scope: ['user:email'] })
+)
 app.get('/auth/callback',
   passport.authenticate('github'),
   (req, res) => {
-    res.json({ user: req.user })
+    res.json({ user: req.user, url: req.session.url })
   }
 )
 app.get('/auth/logout', (req, res) => {
   req.logout()
-  res.redirect('/')
+  res.redirect(req.query.url || '/')
 })
-
-app.get('/session', (req, res) => {
+app.get('/auth/me', (req, res) => {
   res.json({ user: req.user })
 })
 

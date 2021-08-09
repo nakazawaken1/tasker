@@ -65,8 +65,4 @@ export default {
   serverMiddleware: [
     '~/server'
   ],
-
-  router: {
-    middleware: 'session'
-  },
 }
